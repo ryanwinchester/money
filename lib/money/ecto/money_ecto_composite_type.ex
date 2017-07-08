@@ -19,9 +19,9 @@ defmodule Money.Ecto.Composite.Type do
     end
 
     # When loading from the database
-    def load({currency, amount}) do
+    def load({amount, currency}) do
       with {:ok, currency_code} <- Money.validate_currency_code(currency) do
-        {:ok, Money.new(currency_code, amount)}
+        {:ok, Money.new(amount, currency_code)}
       else
         error -> error
       end
@@ -31,13 +31,13 @@ defmodule Money.Ecto.Composite.Type do
     # since we are dumping from %Money{} structs that the
     # data is ok
     def dump(%Money{} = money) do
-      {:ok, {to_string(money.currency), money.amount}}
+      {:ok, {money.amount, to_string(money.currency)}}
     end
 
-    def dump({currency, amount})
+    def dump({amount, currency})
     when (is_binary(currency) or is_atom(currency)) and is_number(amount) do
       with {:ok, currency_code} <- Money.validate_currency_code(currency) do
-        {:ok, {to_string(currency_code), amount}}
+        {:ok, {amount, to_string(currency_code)}}
       else
         error -> error
       end
@@ -52,7 +52,7 @@ defmodule Money.Ecto.Composite.Type do
       {:ok, money}
     end
 
-    def cast({currency, amount} = money)
+    def cast({amount, currency} = money)
     when (is_binary(currency) or is_atom(currency)) and is_number(amount) do
       {:ok, Money.new(money)}
     end
@@ -61,7 +61,7 @@ defmodule Money.Ecto.Composite.Type do
     when (is_binary(currency) or is_atom(currency)) and is_number(amount) do
       with decimal_amount <- Decimal.new(amount),
            {:ok, currency_code} <- Money.validate_currency_code(currency) do
-        {:ok, Money.new(currency_code, decimal_amount)}
+        {:ok, Money.new(decimal_amount, currency_code)}
       else
         error -> error
       end
@@ -71,7 +71,7 @@ defmodule Money.Ecto.Composite.Type do
     when (is_binary(currency) or is_atom(currency)) and is_binary(amount) do
       with {:ok, amount} <- Decimal.parse(amount),
            {:ok, currency_code} <- Money.validate_currency_code(currency) do
-        {:ok, Money.new(currency_code, amount)}
+        {:ok, Money.new(amount, currency_code)}
       else
         error -> error
       end

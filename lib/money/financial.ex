@@ -37,7 +37,7 @@ defmodule Money.Financial do
     |> Math.power(periods)
     |> Decimal.mult(amount)
 
-    Money.new(currency, fv)
+    Money.new(fv, currency)
   end
 
   @doc """
@@ -94,7 +94,7 @@ defmodule Money.Financial do
     |> Math.power(periods)
 
     pv = Decimal.div(amount, pv_1)
-    Money.new(currency, pv)
+    Money.new(pv, currency)
   end
 
   @doc """
@@ -160,7 +160,7 @@ defmodule Money.Financial do
   """
   def net_present_value([{period, %Money{currency: currency}} | _] = flows, interest_rate)
   when is_integer(period) and is_number(interest_rate) do
-    net_present_value(flows, interest_rate, Money.new(currency, 0))
+    net_present_value(flows, interest_rate, Money.new(0, currency))
   end
 
   def net_present_value([{period, %Money{}} | _] = flows, interest_rate, %Money{} = investment)
@@ -192,7 +192,7 @@ defmodule Money.Financial do
       #Money<:USD, 7731.466833737959119743127888>
   """
   def net_present_value(%Money{currency: currency} = future_value, interest_rate, periods) do
-    net_present_value(future_value, interest_rate, periods, Money.new(currency, 0))
+    net_present_value(future_value, interest_rate, periods, Money.new(0, currency))
   end
 
   def net_present_value(%Money{} = future_value, interest_rate, periods, %Money{} = investment) do
@@ -307,7 +307,7 @@ defmodule Money.Financial do
     interest_rate = Decimal.new(interest_rate)
     p1 = Decimal.mult(pv_amount, interest_rate)
     p2 = Decimal.sub(@one, Decimal.add(@one, interest_rate) |> Math.power(-periods))
-    Money.new(pv_currency, Decimal.div(p1, p2))
+    Money.new(Decimal.div(p1, p2), pv_currency)
   end
 
   defp validate_same_currency!(%Money{} = flow, flows) do

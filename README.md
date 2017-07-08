@@ -37,16 +37,18 @@ An optional callback module can also be defined.  This module defines a `rates_r
 
 `Money` provides a set of configuration keys to customize behaviour. The default configuration is:
 
-    config :ex_money,
-      exchange_rate_service: false,
-      exchange_rates_retrieve_every: 300_000,
-      delay_before_first_retrieval: 100,
-      api_module: Money.ExchangeRates.OpenExchangeRates,
-      open_exchange_rates_app_id: nil,
-      callback_module: Money.ExchangeRates.Callback,
-      log_failure: :warn,
-      log_info: :info,
-      log_success: nil
+```elixir
+config :ex_money,
+  exchange_rate_service: false,
+  exchange_rates_retrieve_every: 300_000,
+  delay_before_first_retrieval: 100,
+  api_module: Money.ExchangeRates.OpenExchangeRates,
+  open_exchange_rates_app_id: nil,
+  callback_module: Money.ExchangeRates.Callback,
+  log_failure: :warn,
+  log_info: :info,
+  log_success: nil
+```
 
 These keys are are defined as follows:
 
@@ -70,10 +72,12 @@ These keys are are defined as follows:
 
 Keys can also be configured to retrieve values from environment variables.  This lookup is done at runtime to facilitate deployment strategies.  If the value of a configuration key is `{:system, "some_string"}` then `"some_string"` is interpreted as an environment variable name which is passed to `System.get_env/2`.  An example configuration might be:
 
-    config :ex_money,
-      exchange_rate_service: {:system, "RATE_SERVICE"},
-      exchange_rates_retrieve_every: {:system, "RETRIEVE_EVERY"},
-      open_exchange_rates_app_id: {:system, "OPEN_EXCHANGE_RATES_APP_ID"}
+```elixir
+config :ex_money,
+  exchange_rate_service: {:system, "RATE_SERVICE"},
+  exchange_rates_retrieve_every: {:system, "RETRIEVE_EVERY"},
+  open_exchange_rates_app_id: {:system, "OPEN_EXCHANGE_RATES_APP_ID"}
+```
 
 ## The Exchange rates service process supervision and startup
 
@@ -133,13 +137,13 @@ end
 
 ### Creating a %Money{} struct
 
-     iex> Money.new(:USD, 100)
+     iex> Money.new(100, :USD)
      #Money<:USD, 100>
 
-     iex> Money.new("CHF", 130.02)
+     iex> Money.new(130.02, "CHF)
      #Money<:CHF, 130.02>
 
-     iex> Money.new("thb", 11)
+     iex> Money.new(11, "thb")
      #Money<:THB, 11>
 
 The canonical representation of a currency code is an `atom` that is a valid
@@ -158,13 +162,13 @@ An optional sigil module is available to aid in creating %Money{} structs.  It n
 
 See also `Money.to_string/2` and `Cldr.Number.to_string/2`):
 
-    iex> Money.to_string Money.new("thb", 11)
+    iex> Money.to_string Money.new(11, "thb")
     "THB11.00"
 
-    iex> Money.to_string Money.new("USD", 234.467)
+    iex> Money.to_string Money.new(234.467, "USD")
     "$234.47"
 
-    iex> Money.to_string Money.new("USD", 234.467), format: :long
+    iex> Money.to_string Money.new(234.467, "USD"), format: :long
     "234.47 US dollars"
 
 Note that the output is influenced by the locale in effect.  By default the localed used is that returned by `Cldr.get_local/0`.  Its default value is "en".  Additional locales can be configured, see `Cldr`.  The formatting options are defined in `Cldr.Number.to_string/2`.
@@ -173,10 +177,10 @@ Note that the output is influenced by the locale in effect.  By default the loca
 
 See also the module `Money.Arithmetic`:
 
-    iex> m1 = Money.new(:USD, 100)
+    iex> m1 = Money.new(100, :USD)
     #Money<:USD, 100>}
 
-    iex> m2 = Money.new(:USD, 200)
+    iex> m2 = Money.new(200, :USD)
     #Money<:USD, 200>}
 
     iex> Money.add(m1, m2)
@@ -185,15 +189,15 @@ See also the module `Money.Arithmetic`:
     iex> Money.add!(m1, m2)
     #Money<:USD, 300>
 
-    iex> m3 = Money.new(:AUD, 300)
+    iex> m3 = Money.new(300, :AUD)
     #Money<:AUD, 300>
 
-    iex> Money.add Money.new(:USD, 200), Money.new(:AUD, 100)
+    iex> Money.add Money.new(200, :USD), Money.new(100, :AUD)
     {:error, {ArgumentError, "Cannot add monies with different currencies. Received :USD and :AUD."}}
 
     # Split a %Money{} returning the a dividend and a remainder. All
     # operations respect the number of fractional digits defined for a currency
-    iex> m1 = Money.new(:USD, 100)
+    iex> m1 = Money.new(100, :USD)
     #Money<:USD, 100>
 
     iex> Money.split(m1, 3)
@@ -201,28 +205,28 @@ See also the module `Money.Arithmetic`:
 
     # Rounding applies the currency definitions of CLDR as implemented in
     # the hex package [ex_cldr](https://hex.pm/packages/ex_cldr)
-    iex> Money.round Money.new(:USD, 100.678)
+    iex> Money.round Money.new(100.678, :USD)
     #Money<:USD, 100.68>
 
-    iex> Money.round Money.new(:JPY, 100.678)
+    iex> Money.round Money.new(100.678, :JPY)
     #Money<:JPY, 101>
 
 ### Currency Conversion
 
 A `%Money{}` struct can be converted to another currency using `Money.to_currency/3` or `Money.to_currency!/3`.  For example:
 
-    iex> Money.to_currency Money.new(:USD,100), :AUD
+    iex> Money.to_currency Money.new(100, :USD), :AUD
     {:ok, #Money<:AUD, 136.4300>}
 
-    iex> Money.to_currency Money.new(:USD, 100) , :AUDD, %{USD: Decimal.new(1), AUD: Decimal.new(0.7345)}
+    iex> Money.to_currency Money.new(100, :USD) , :AUDD, %{USD: Decimal.new(1), AUD: Decimal.new(0.7345)}
     {:error, {Cldr.UnknownCurrencyError, "Currency :AUDD is not known"}}
 
-    iex> Money.to_currency! Money.new(:USD,100), :XXX
+    iex> Money.to_currency! Money.new(100, :USD), :XXX
     ** (Money.ExchangeRateError) No exchange rate is available for currency :XXX
 
 A user-defined map of exchange rates can also be supplied:
 
-    iex> Money.to_currency Money.new(:USD,100), :AUD, %{USD: Decimal.new(1.0), AUD: Decimal.new(1.3)}
+    iex> Money.to_currency Money.new(100, :USD), :AUD, %{USD: Decimal.new(1.0), AUD: Decimal.new(1.3)}
     #Money<:AUD, 130>
 
 ### Financial Functions
@@ -285,7 +289,7 @@ end
 
 Insert into the database:
 
-    iex> Repo.insert %Ledger{amount: Money.new(:USD, 100)}
+    iex> Repo.insert %Ledger{amount: Money.new(100, :USD)}
     [debug] QUERY OK db=4.5ms
     INSERT INTO "ledgers" ("amount","inserted_at","updated_at") VALUES ($1,$2,$3)
     [{"USD", #Decimal<100>}, {{2016, 10, 7}, {23, 12, 13, 0}}, {{2016, 10, 7}, {23, 12, 13, 0}}]
@@ -332,7 +336,7 @@ end
 
 Insert into the database:
 
-    iex> Repo.insert %Ledger{amount_map: Money.new(:USD, 100)}
+    iex> Repo.insert %Ledger{amount_map: Money.new(100, :USD)}
     [debug] QUERY OK db=25.8ms
     INSERT INTO "ledgers" ("amount_map","inserted_at","updated_at") VALUES ($1,$2,$3)
     RETURNING "id" [%{amount: "100", currency: "USD"},
